@@ -19,7 +19,7 @@ export default function Login() {
 
     if (email === fakeUser.email && password === fakeUser.password) {
       localStorage.setItem("loggedIn", "true");
-      router.push("/dashboard");
+      router.push("/home");
     } else {
       setError("Invalid email or password");
     }

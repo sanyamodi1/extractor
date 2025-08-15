@@ -1,50 +1,94 @@
 "use client";
 
 import React from "react";
+import { UserData } from "../app/types";
 
 type UserInfoProps = {
-  email: string;
-  setEmail: (v: string) => void;
-  password: string;
-  setPassword: (v: string) => void;
-  name: string;
-  setName: (v: string) => void;
-  phone: string;
-  setPhone: (v: string) => void;
-  dateOfBirth: string;
-  setDateOfBirth: (v: string) => void;
-  gender: string;
-  setGender: (v: string) => void;
+  data: UserData;
+  setData: React.Dispatch<React.SetStateAction<UserData>>;
 };
 
-export default function UserInfo({
-  email,
-  setEmail,
-  password,
-  setPassword,
-  name,
-  setName,
-  phone,
-  setPhone,
-  dateOfBirth,
-  setDateOfBirth,
-  gender,
-  setGender,
-}: UserInfoProps) {
+export default function UserInfo({ data, setData }: UserInfoProps) {
+  const handleChange = (key: keyof UserData, value: string) => {
+    setData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const normalizeGender = (g: string) => {
+    if (!g) return "";
+    const lower = g.toLowerCase();
+    if (["male", "female", "other"].includes(lower)) return lower;
+    return "";
+  };
+
+  // ✅ Properly type the field arrays
+  const identityFields: { key: keyof UserData; label: string; type?: string }[] = [
+    { key: "id_number", label: "ID Number" },
+    { key: "name", label: "Name" },
+    { key: "date_of_birth", label: "Date of Birth", type: "date" },
+    { key: "nationality", label: "Nationality" },
+    { key: "issuing_date", label: "Issuing Date", type: "date" },
+    { key: "expiry_date", label: "Expiry Date", type: "date" },
+    { key: "authority", label: "Authority" },
+    { key: "card_number", label: "Card Number" },
+    { key: "occupation", label: "Occupation" },
+    { key: "employer", label: "Employer" },
+    { key: "issuing_place", label: "Issuing Place" },
+  ];
+
+  const vehicleFields: { key: keyof UserData; label: string; type?: string }[] = [
+    { key: "traffic_plate_number", label: "Traffic Plate Number" },
+    { key: "vehicle_place_of_issue", label: "Place of Issue" },
+    { key: "vehicle_owner", label: "Owner" },
+    { key: "vehicle_tc_number", label: "TC Number" },
+    { key: "vehicle_card_expiry_date", label: "Card Expiry Date", type: "date" },
+    { key: "insurance_expiry_date", label: "Insurance Expiry Date", type: "date" },
+    { key: "policy_number", label: "Policy Number" },
+    { key: "registration_date", label: "Registration Date", type: "date" },
+  ];
+
+  const drivingFields: { key: keyof UserData; label: string }[] = [
+    { key: "license_number", label: "License Number" },
+    { key: "license_place_of_issue", label: "Place of Issue" },
+    { key: "licensing_authority_number", label: "Authority Number" },
+  ];
+
   return (
     <>
       <div className="section-card">
-        <h2 className="form-title">User Info</h2>
+        <h2 className="form-title">Identity Card</h2>
+        {identityFields.map(({ key, label, type }) => (
+          <div className="form-group" key={key}>
+            <label htmlFor={key}>{label}</label>
+            <input
+              id={key}
+              type={type || "text"}
+              value={data[key]}
+              onChange={(e) => handleChange(key, e.target.value)}
+            />
+          </div>
+        ))}
+
+        <div className="form-group">
+          <label htmlFor="sex">Gender</label>
+          <select
+            id="sex"
+            value={normalizeGender(data.sex)}
+            onChange={(e) => handleChange("sex", e.target.value)}
+          >
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
 
         <div className="form-group">
           <label htmlFor="email">Email *</label>
           <input
             id="email"
-            required
             type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={data.email}
+            onChange={(e) => handleChange("email", e.target.value)}
           />
         </div>
 
@@ -52,23 +96,9 @@ export default function UserInfo({
           <label htmlFor="password">Password *</label>
           <input
             id="password"
-            required
             type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="name">Name *</label>
-          <input
-            id="name"
-            required
-            type="text"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={data.password}
+            onChange={(e) => handleChange("password", e.target.value)}
           />
         </div>
 
@@ -77,36 +107,40 @@ export default function UserInfo({
           <input
             id="phone"
             type="tel"
-            placeholder="Phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            value={data.phone}
+            onChange={(e) => handleChange("phone", e.target.value)}
           />
         </div>
+      </div>
 
-        <div className="form-group">
-          <label htmlFor="dob">Date of Birth</label>
-          <input
-            id="dob"
-            type="date"
-            placeholder="Date of Birth"
-            value={dateOfBirth}
-            onChange={(e) => setDateOfBirth(e.target.value)}
-          />
-        </div>
+      <div className="section-card">
+        <h2 className="form-title">Vehicle License</h2>
+        {vehicleFields.map(({ key, label, type }) => (
+          <div className="form-group" key={key}>
+            <label htmlFor={key}>{label}</label>
+            <input
+              id={key}
+              type={type || "text"}
+              value={data[key]}
+              onChange={(e) => handleChange(key, e.target.value)}
+            />
+          </div>
+        ))}
+      </div>
 
-        <div className="form-group">
-          <label htmlFor="gender">Gender</label>
-          <select
-            id="gender"
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
-          >
-            <option value="">Select Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
+      <div className="section-card">
+        <h2 className="form-title">Driving License</h2>
+        {drivingFields.map(({ key, label }) => (
+          <div className="form-group" key={key}>
+            <label htmlFor={key}>{label}</label>
+            <input
+              id={key}
+              type="text"
+              value={data[key]}
+              onChange={(e) => handleChange(key, e.target.value)}
+            />
+          </div>
+        ))}
       </div>
 
       <style jsx>{`
@@ -115,7 +149,7 @@ export default function UserInfo({
           padding: 1.5rem;
           border-radius: 8px;
           box-shadow: 0 0 8px rgb(0 0 0 / 0.1);
-          max-width: 500px;
+          max-width: 600px;
           margin-bottom: 1.5rem;
         }
         .form-title {

@@ -54,7 +54,7 @@ export default function IdentityDocsForm({
     setLoading(true);
 
     try {
-      const res = await fetch("https://5c29e818f535.ngrok-free.app/extract", {
+      const res = await fetch("https://c3ac72581c73.ngrok-free.app/extract", {
         method: "POST",
         body: formData,
       });

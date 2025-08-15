@@ -1,22 +1,84 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import UserInfo from "../../components/UserInfo";
 import AddressForm, { Address } from "../../components/AddressForm";
 import IdentityDocsForm, { IdentityDoc } from "../../components/IdentityDocsForm";
 import VehiclesForm, { Vehicle } from "../../components/VehiclesForm";
 
-export default function UserForm() {
-  // User info
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [gender, setGender] = useState("");
+// UserData type
+export type UserData = {
+  email: string;
+  password: string;
+  phone: string;
 
-  // Address
+  // Identity Card
+  id_number: string;
+  name: string;
+  date_of_birth: string;
+  nationality: string;
+  issuing_date: string;
+  expiry_date: string;
+  sex: string;
+  authority: string;
+  card_number: string;
+  occupation: string;
+  employer: string;
+  issuing_place: string;
+
+  // Vehicle License
+  traffic_plate_number: string;
+  vehicle_place_of_issue: string;
+  vehicle_owner: string;
+  vehicle_tc_number: string;
+  vehicle_card_expiry_date: string;
+  insurance_expiry_date: string;
+  policy_number: string;
+  registration_date: string;
+
+  // Driving License
+  license_number: string;
+  license_place_of_issue: string;
+  licensing_authority_number: string;
+};
+
+export default function UserForm() {
+  const router = useRouter();
+
+  const [userData, setUserData] = useState<UserData>({
+    email: "",
+    password: "",
+    phone: "",
+
+    id_number: "",
+    name: "",
+    date_of_birth: "",
+    nationality: "",
+    issuing_date: "",
+    expiry_date: "",
+    sex: "",
+    authority: "",
+    card_number: "",
+    occupation: "",
+    employer: "",
+    issuing_place: "",
+
+    traffic_plate_number: "",
+    vehicle_place_of_issue: "",
+    vehicle_owner: "",
+    vehicle_tc_number: "",
+    vehicle_card_expiry_date: "",
+    insurance_expiry_date: "",
+    policy_number: "",
+    registration_date: "",
+
+    license_number: "",
+    license_place_of_issue: "",
+    licensing_authority_number: "",
+  });
+
   const [address, setAddress] = useState<Address>({
     street: "",
     city: "",
@@ -25,12 +87,10 @@ export default function UserForm() {
     country: "",
   });
 
-  // Identity documents
   const [identityDocs, setIdentityDocs] = useState<IdentityDoc[]>([
     { type: "", documentNumber: "", issueDate: "", expiryDate: "" },
   ]);
 
-  // Vehicles
   const [vehicles, setVehicles] = useState<Vehicle[]>([
     {
       registrationNo: "",
@@ -51,10 +111,10 @@ export default function UserForm() {
     },
   ]);
 
-  // Loading state for extraction
   const [extracting, setExtracting] = useState(false);
+  const [extractedRaw, setExtractedRaw] = useState<any>(null);
 
-  // Handle document image upload & extraction
+  // File upload & extraction
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
 
@@ -65,40 +125,62 @@ export default function UserForm() {
       const formData = new FormData();
       formData.append("file", file);
 
-      // Your actual API endpoint
-      const extractionApiUrl = "https://5c29e818f535.ngrok-free.app/extract";
+      const extractionApiUrl = "https://92938c5cc7cc.ngrok-free.app/extract";
+      const res = await fetch(extractionApiUrl, { method: "POST", body: formData });
 
-      const res = await fetch(extractionApiUrl, {
-        method: "POST",
-        body: formData,
-      });
+      if (!res.ok) throw new Error(`Failed to extract data (${res.status})`);
 
-      if (!res.ok) throw new Error("Failed to extract data");
       const json = await res.json();
-      console.log("Extracted JSON:", json);
+      const extractedData = typeof json.output === "string" ? JSON.parse(json.output) : json.output;
 
-      // Parse the output string into an object
-      const extractedData = json.output ? JSON.parse(json.output) : {};
+      console.log("Extracted:", extractedData);
+      setExtractedRaw(extractedData);
 
-      console.log("Extracted Data:", extractedData);
+      // Map extracted data to userData safely
+      setUserData((prev) => ({
+        ...prev,
+        email: extractedData.email || "",
+        password: extractedData.password || "",
+        phone: extractedData.phone || "",
+        id_number: extractedData.id_number || "",
+        name: extractedData.name || "",
+        date_of_birth: extractedData.date_of_birth || "",
+        nationality: extractedData.nationality || "",
+        issuing_date: extractedData.issuing_date || "",
+        expiry_date: extractedData.expiry_date || "",
+        sex:
+          extractedData.sex?.toLowerCase() === "male" ||
+          extractedData.sex?.toLowerCase() === "m"
+            ? "male"
+            : extractedData.sex?.toLowerCase() === "female" ||
+              extractedData.sex?.toLowerCase() === "f"
+            ? "female"
+            : extractedData.sex
+            ? "other"
+            : "",
+        authority: extractedData.authority || "",
+        card_number: extractedData.card_number || "",
+        occupation: extractedData.occupation || "",
+        employer: extractedData.employer || "",
+        issuing_place: extractedData.issuing_place || "",
+        traffic_plate_number: extractedData.traffic_plate_number || "",
+        vehicle_place_of_issue: extractedData.vehicle_place_of_issue || "",
+        vehicle_owner: extractedData.vehicle_owner || "",
+        vehicle_tc_number: extractedData.vehicle_tc_number || "",
+        vehicle_card_expiry_date: extractedData.vehicle_card_expiry_date || "",
+        insurance_expiry_date: extractedData.insurance_expiry_date || "",
+        policy_number: extractedData.policy_number || "",
+        registration_date: extractedData.registration_date || "",
+        license_number: extractedData.license_number || "",
+        license_place_of_issue: extractedData.license_place_of_issue || "",
+        licensing_authority_number: extractedData.licensing_authority_number || "",
+      }));
 
-      // Map extracted fields to your form state properly:
-      setEmail(""); // No email in extraction, so empty or keep current if preferred
-      setName(extractedData.name || "");
-      setPhone(""); // No phone in extraction, keep empty or current
-      setDateOfBirth(extractedData.date_of_birth || "");
-      setGender(extractedData.sex || "");
+      setAddress((prev) => ({
+        ...prev,
+        country: extractedData.nationality || "",
+      }));
 
-      // Address fields not extracted, keep empty or current
-      setAddress({
-        street: "",
-        city: "",
-        state: "",
-        postalCode: "",
-        country: "",
-      });
-
-      // Identity docs — fill from extraction or reset to empty
       setIdentityDocs([
         {
           type: extractedData.authority || "",
@@ -107,133 +189,49 @@ export default function UserForm() {
           expiryDate: extractedData.expiry_date || "",
         },
       ]);
-
-      // Vehicles — no data from extraction, reset or keep current
-      setVehicles([
-        {
-          registrationNo: "",
-          make: "",
-          model: "",
-          year: 0,
-          chassisNo: "",
-          engineNo: "",
-          color: "",
-          insurance: {
-            policyNumber: "",
-            provider: "",
-            startDate: "",
-            endDate: "",
-            premiumAmount: "",
-            coverageDetails: "",
-          },
-        },
-      ]);
     } catch (error) {
+      console.error("Extraction error:", error);
       alert("Error extracting data: " + (error as Error).message);
     } finally {
       setExtracting(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    const data = {
-      email,
-      password,
-      name,
-      phone: phone || null,
-      dateOfBirth: dateOfBirth || null,
-      gender: gender || null,
-      address: {
-        ...address,
-      },
-      identityDocs: identityDocs.map((doc) => ({
-        ...doc,
-        issueDate: doc.issueDate || null,
-        expiryDate: doc.expiryDate || null,
-      })),
-      vehicles: vehicles.map((v) => ({
-        registrationNo: v.registrationNo,
-        make: v.make,
-        model: v.model,
-        year: Number(v.year),
-        chassisNo: v.chassisNo,
-        engineNo: v.engineNo,
-        color: v.color || null,
-        insurance: {
-          policyNumber: v.insurance.policyNumber,
-          provider: v.insurance.provider,
-          startDate: v.insurance.startDate,
-          endDate: v.insurance.endDate,
-          premiumAmount: Number(v.insurance.premiumAmount),
-          coverageDetails: v.insurance.coverageDetails,
-        },
-      })),
-    };
-
-    try {
-      const res = await fetch("http://localhost:3001/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!res.ok) throw new Error("Failed to save user");
-
-      alert("User saved successfully!");
-      // Optionally reset form here
-    } catch (err) {
-      alert("Error saving user: " + (err as Error).message);
-    }
+    // Optional validation here
+    router.push("/onboard");
   };
 
   return (
-    <>
-      <style>{`
-        /* Add your styles here or import CSS */
-      `}</style>
+    <form noValidate onSubmit={handleSubmit}>
+      <h2>Upload Document Image</h2>
+      <input type="file" accept="image/*" onChange={handleFileUpload} disabled={extracting} />
+      {extracting && <p>Extracting data from document...</p>}
 
-      <form onSubmit={handleSubmit} noValidate>
-        <h2>Upload Document Image</h2>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileUpload}
-          disabled={extracting}
-        />
-        {extracting && <p>Extracting data from document...</p>}
+      <UserInfo data={userData} setData={setUserData} />
 
-        <UserInfo
-          email={email}
-          setEmail={setEmail}
-          password={password}
-          setPassword={setPassword}
-          name={name}
-          setName={setName}
-          phone={phone}
-          setPhone={setPhone}
-          dateOfBirth={dateOfBirth}
-          setDateOfBirth={setDateOfBirth}
-          gender={gender}
-          setGender={setGender}
-        />
+      <AddressForm address={address} setAddress={setAddress} />
 
-        <AddressForm address={address} setAddress={setAddress} />
+      <IdentityDocsForm identityDocs={identityDocs} setIdentityDocs={setIdentityDocs} />
 
-        <IdentityDocsForm
-          identityDocs={identityDocs}
-          setIdentityDocs={setIdentityDocs}
-        />
+      <VehiclesForm vehicles={vehicles} setVehicles={setVehicles} />
 
-        <VehiclesForm vehicles={vehicles} setVehicles={setVehicles} />
-
-        <div style={{ marginTop: 30 }}>
-          <button type="submit" disabled={extracting}>
-            Submit
-          </button>
-        </div>
-      </form>
-    </>
+      <button
+        type="submit"
+        className="submit-button"
+        style={{
+          marginTop: "1rem",
+          padding: "0.6rem 1.2rem",
+          borderRadius: "8px",
+          background: "#0070f3",
+          color: "#fff",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Submit & Continue
+      </button>
+    </form>
   );
 }
